@@ -7,7 +7,7 @@ import Header from '../../components/Header';
 import FileList from '../../components/FileList';
 import Upload from '../../components/Upload';
 
-import { Container, Title, ImportFileContainer, Footer } from './styles';
+import { Container, Title, ImportFileContainer, Footer, Error } from './styles';
 
 import alert from '../../assets/alert.svg';
 import api from '../../services/api';
@@ -20,22 +20,38 @@ interface FileProps {
 
 const Import: React.FC = () => {
   const [uploadedFiles, setUploadedFiles] = useState<FileProps[]>([]);
+  const [inputError, setInputError] = useState('');
   const history = useHistory();
 
   async function handleUpload(): Promise<void> {
-    // const data = new FormData();
+    const data = new FormData();
 
-    // TODO
+    if (!uploadedFiles) {
+      setInputError('Envie um arquivo válido');
+      return;
+    }
+
+    data.append('file', uploadedFiles[0].file, uploadedFiles[0].name);
 
     try {
-      // await api.post('/transactions/import', data);
+      await api.post('/transactions/import', data);
+
+      history.push('');
+      setInputError('');
     } catch (err) {
-      // console.log(err.response.error);
+      setInputError('Erro ao fazer upload de arquivo');
+      console.log(err.response.error);
     }
   }
 
   function submitFile(files: File[]): void {
-    // TODO
+    const uploadFile = files.map(file => ({
+      file,
+      name: file.name,
+      readableSize: filesize(file.size),
+    }));
+
+    setUploadedFiles(uploadFile);
   }
 
   return (
@@ -46,6 +62,8 @@ const Import: React.FC = () => {
         <ImportFileContainer>
           <Upload onUpload={submitFile} />
           {!!uploadedFiles.length && <FileList files={uploadedFiles} />}
+
+          {inputError && <Error>{inputError}</Error>}
 
           <Footer>
             <p>
